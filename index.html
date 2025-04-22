@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS AI Interface</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto:wght@300;400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --jarvis-blue: #00a8ff;
+            --jarvis-dark: #0a0a1a;
+            --jarvis-light: #e0f7ff;
+            --jarvis-accent: #ff5e00;
+            --jarvis-glass: rgba(10, 20, 40, 0.7);
+        }
+
+        body {
+            background: url('https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1471&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            color: var(--jarvis-light);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        /* Mode Selection Screen */
+        .mode-selection {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+        }
+
+        .mode-selection h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            color: var(--jarvis-blue);
+            margin-bottom: 2rem;
+            text-shadow: 0 0 15px rgba(0, 168, 255, 0.7);
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .mode-btn {
+            padding: 1.5rem 3rem;
+            font-size: 1.5rem;
+            background: var(--jarvis-glass);
+            border: 2px solid var(--jarvis-blue);
+            color: var(--jarvis-light);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .mode-btn:hover {
+            background: rgba(0, 80, 160, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 168, 255, 0.3);
+        }
+
+        /* Chat Interface (hidden by default) */
+        .jarvis-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        .jarvis-display {
+            width: 90%;
+            max-width: 600px;
+            height: 70vh;
+            background: var(--jarvis-glass);
+            border: 1px solid var(--jarvis-blue);
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0, 168, 255, 0.3),
+                        inset 0 0 20px rgba(0, 168, 255, 0.2);
+            padding: 25px;
+            overflow-y: auto;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .jarvis-header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--jarvis-blue);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(0, 168, 255, 0.7);
+            letter-spacing: 2px;
+        }
+
+        .jarvis-intro {
+            color: var(--jarvis-light);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            margin: 15px 0;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 80%;
+            line-height: 1.5;
+            position: relative;
+            animation: fadeIn 0.4s ease-out;
+            font-size: 1rem;
+        }
+
+        .user-message {
+            background: rgba(0, 80, 160, 0.7);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+            border-top-left-radius: 18px;
+        }
+
+        .jarvis-message {
+            background: rgba(20, 20, 40, 0.7);
+            color: var(--jarvis-light);
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+            border-top-right-radius: 18px;
+            border-left: 3px solid var(--jarvis-blue);
+        }
+
+        .input-container {
+            width: 100%;
+            display: flex;
+            position: relative;
+            margin-top: auto;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 15px 70px 15px 20px;
+            background: rgba(10, 20, 40, 0.8);
+            border: 1px solid var(--jarvis-blue);
+            border-radius: 30px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #user-input:focus {
+            border-color: var(--jarvis-accent);
+            box-shadow: 0 0 15px rgba(0, 168, 255, 0.5);
+        }
+
+        #send-button {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--jarvis-blue);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #send-button:hover {
+            background: var(--jarvis-accent);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .voice-controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+            gap: 15px;
+        }
+
+        .voice-btn {
+            background: var(--jarvis-glass);
+            border: 1px solid var(--jarvis-blue);
+            color: var(--jarvis-light);
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .voice-btn:hover {
+            background: rgba(0, 80, 160, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .voice-btn.active {
+            background: var(--jarvis-accent);
+            border-color: var(--jarvis-accent);
+            box-shadow: 0 0 15px rgba(255, 94, 0, 0.5);
+        }
+
+        .status-light {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--jarvis-blue);
+            box-shadow: 0 0 15px var(--jarvis-blue);
+            animation: pulse 2s infinite;
+        }
+
+        .typing-indicator {
+            display: inline-block;
+            margin-left: 8px;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--jarvis-blue);
+            border-radius: 50%;
+            margin-right: 4px;
+            opacity: 0.4;
+        }
+
+        .typing-indicator span:nth-child(1) {
+            animation: typingAnimation 1.2s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation: typingAnimation 1.2s infinite 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation: typingAnimation 1.2s infinite 0.4s;
+        }
+
+        /* Image Viewer (hidden by default) */
+        .model-viewer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 50;
+            overflow: hidden;
+        }
+
+        .jarvis-image {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            animation: float 6s ease-in-out infinite, glow 3s ease-in-out infinite alternate;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(0, 168, 255, 0.5);
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: var(--jarvis-glass);
+            border: 1px solid var(--jarvis-blue);
+            color: var(--jarvis-light);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 80, 160, 0.5);
+            transform: translateY(-2px);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes typingAnimation {
+            0% { opacity: 0.4; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(-5px); }
+            100% { opacity: 0.4; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0% { transform: translate(-50%, -50%) translateY(0px); }
+            50% { transform: translate(-50%, -50%) translateY(-20px); }
+            100% { transform: translate(-50%, -50%) translateY(0px); }
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 30px rgba(0, 168, 255, 0.5); }
+            to { box-shadow: 0 0 60px rgba(0, 168, 255, 0.9); }
+        }
+
+        @keyframes scanline {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 100%; }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--jarvis-blue);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .jarvis-display {
+                width: 95%;
+                height: 80vh;
+            }
+            
+            .jarvis-header {
+                font-size: 2rem;
+            }
+
+            .mode-buttons {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .mode-btn {
+                padding: 1rem 2rem;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mode Selection Screen -->
+    <div class="mode-selection" id="mode-selection">
+        <h1>JARVIS INTERFACE</h1>
+        <div class="mode-buttons">
+            <button class="mode-btn" id="chat-btn">CHAT WITH JARVIS</button>
+            <button class="mode-btn" id="model-btn">VIEW JARVIS IMAGE</button>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div class="jarvis-container" id="jarvis-container">
+        <div class="jarvis-display">
+            <div class="status-light"></div>
+            <h1 class="jarvis-header">JARVIS</h1>
+            <div class="jarvis-intro">I'm a Virtual Assistant JARVIS. How may I help you?</div>
+            
+            <div class="chat-area" id="chat-area">
+                <!-- Messages will appear here -->
+            </div>
+            
+            <div class="input-container">
+                <input type="text" id="user-input" placeholder="Type your message here..." autocomplete="off">
+                <button id="send-button">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="voice-controls">
+                <button id="speak-btn" class="voice-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    Speak
+                </button>
+                <button id="listen-btn" class="voice-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    Listen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Viewer -->
+    <div class="model-viewer" id="model-viewer">
+        <button class="back-btn" id="back-btn">BACK TO MENU</button>
+        <img src="https://i.postimg.cc/W3v8Md22/2141574-1920x1080-desktop-full-hd-jarvis-iron-man-background-image.jpg" class="jarvis-image" id="jarvis-image" alt="JARVIS Interface">
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mode selection elements
+            const modeSelection = document.getElementById('mode-selection');
+            const chatBtn = document.getElementById('chat-btn');
+            const modelBtn = document.getElementById('model-btn');
+            
+            // Chat interface elements
+            const jarvisContainer = document.getElementById('jarvis-container');
+            const chatArea = document.getElementById('chat-area');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const speakButton = document.getElementById('speak-btn');
+            const listenButton = document.getElementById('listen-btn');
+            
+            // Image viewer elements
+            const modelViewer = document.getElementById('model-viewer');
+            const backBtn = document.getElementById('back-btn');
+            const jarvisImage = document.getElementById('jarvis-image');
+            
+            // Speech synthesis
+            const synth = window.speechSynthesis;
+            let recognition;
+            
+            // Initialize speech recognition if available
+            try {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    userInput.value = transcript;
+                    sendMessage();
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error', event.error);
+                    addMessage("I couldn't quite catch that. Could you repeat or type your request?", 'jarvis');
+                    speak("I couldn't quite catch that. Could you repeat or type your request?");
+                };
+            } catch (e) {
+                console.warn("Speech recognition not supported");
+                listenButton.disabled = true;
+                listenButton.title = "Speech recognition not supported in your browser";
+            }
+
+            // JARVIS responses
+            const jarvisResponses = [
+                "Processing your request now.",
+                "Accessing databases... information retrieved.",
+                "My protocols suggest the following course of action:",
+                "Security systems report all sectors nominal.",
+                "I've prepared that for you, sir.",
+                "Calculating probabilities... results ready.",
+                "Shall I initiate the requested protocol?",
+                "That operation requires authorization.",
+                "System diagnostics indicate optimal performance.",
+                "Cross-referencing data... recommendation prepared."
+            ];
+
+            // JARVIS knowledge base
+            const knowledgeBase = {
+                "hello": "Good day. All systems operational and ready for your commands.",
+                "hi": "Greetings. How may I assist you today?",
+                "Tell me something about azhan freinds": "Okie. Azhan freinds include Maaz,Soban,Khuzaima,Basit(Bakri) Aziz chimkandi Ameen bkl...",
+                "what is your purpose": "My purpose is to assist you with tasks, provide information, and enhance your productivity through intelligent interaction.",
+                "Tell me something about azhan freinds": "Okie. Azhan best freinds inhcludes Soban and Maaz, both are chutpaglu",
+                "how are you": "All systems functioning at peak efficiency, thank you for inquiring.",
+                "Tell me something about azhan freinds": "Okie. Azhan best freinds inhcludes Anas, Azaan, Azhan bacha , saad, umer , saboor, Hashir ",
+                "what can you do": "I can assist with system diagnostics, data analysis, security oversight, and general information. My full capabilities list contains 1,247 functions.",
+                "who created you": "I was developed by Azhan Abdullah as a sophisticated AI assistant system.",
+                "what time is it": `The current time is ${new Date().toLocaleTimeString()}.`,
+                "what's your name": "I am JARVIS - Just A Rather Very Intelligent System, at your service.",
+                "goodbye": "Very well. I'll maintain standby mode until needed.",
+                "thanks": "You're most welcome. Always a pleasure to assist.",
+                "thank you": "Acknowledgement received. My primary function is to serve.",
+                "status": "Running diagnostic...\n- Core Systems: 100%\n- Memory: 98%\n- Security: 100%\n- Network: Stable\nAll systems nominal.",
+                "help": "Available commands:\n- System status\n- Time/date\n- Security check\n- Protocol list\nOr simply ask me anything."
+            };
+
+            // Speak function
+            function speak(text) {
+                if (synth.speaking) {
+                    synth.cancel();
+                }
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = synth.getVoices().find(voice => voice.name.includes('Google UK English Male') || voice.name.includes('Microsoft David'));
+                utterance.rate = 0.9;
+                utterance.pitch = 0.8;
+                synth.speak(utterance);
+            }
+
+            // Add message to chat
+            function addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.classList.add(sender === 'user' ? 'user-message' : 'jarvis-message');
+                
+                // Format text with line breaks
+                const formattedText = text.replace(/\n/g, '<br>');
+                messageDiv.innerHTML = formattedText;
+                
+                chatArea.appendChild(messageDiv);
+                chatArea.scrollTop = chatArea.scrollHeight;
+                
+                // Speak JARVIS messages
+                if (sender === 'jarvis') {
+                    speak(text);
+                }
+            }
+
+            // Send message function
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (message === '') return;
+
+                addMessage(message, 'user');
+                userInput.value = '';
+                
+                // Show typing indicator
+                const typingDiv = document.createElement('div');
+                typingDiv.classList.add('message', 'jarvis-message');
+                typingDiv.id = 'typing-indicator';
+                typingDiv.innerHTML = 'Processing<span class="typing-indicator"><span></span><span></span><span></span></span>';
+                chatArea.appendChild(typingDiv);
+                chatArea.scrollTop = chatArea.scrollHeight;
+
+                // Process after delay
+                setTimeout(() => {
+                    document.getElementById('typing-indicator')?.remove();
+                    processMessage(message);
+                }, 1000 + Math.random() * 2000);
+            }
+
+            // Process user message
+            function processMessage(message) {
+                const lowerMessage = message.toLowerCase();
+                let response = "";
+
+                // Check knowledge base
+                for (const [key, value] of Object.entries(knowledgeBase)) {
+                    if (lowerMessage.includes(key)) {
+                        response = value;
+                        break;
+                    }
+                }
+
+                // If no specific response, generate a generic one
+                if (response === "") {
+                    const randomIndex = Math.floor(Math.random() * jarvisResponses.length);
+                    response = jarvisResponses[randomIndex];
+                }
+
+                addMessage(response, 'jarvis');
+            }
+
+            // Event listeners for mode selection
+            chatBtn.addEventListener('click', function() {
+                modeSelection.style.display = 'none';
+                jarvisContainer.style.display = 'flex';
+                
+                // Initial greeting
+                setTimeout(() => {
+                    addMessage("System initialization complete. All protocols operational. How may I assist you today?", 'jarvis');
+                }, 1000);
+            });
+
+            modelBtn.addEventListener('click', function() {
+                modeSelection.style.display = 'none';
+                modelViewer.style.display = 'block';
+                
+                // Add additional animation effects to the image
+                jarvisImage.style.animation = 'float 6s ease-in-out infinite, glow 3s ease-in-out infinite alternate';
+            });
+
+            backBtn.addEventListener('click', function() {
+                modelViewer.style.display = 'none';
+                modeSelection.style.display = 'flex';
+            });
+
+            // Event listeners for chat interface
+            sendButton.addEventListener('click', sendMessage);
+            
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            speakButton.addEventListener('click', function() {
+                const lastJarvisMessage = document.querySelector('.jarvis-message:not(#typing-indicator)');
+                if (lastJarvisMessage) {
+                    speak(lastJarvisMessage.textContent);
+                }
+            });
+
+            // Simulate a system update
+function simulateSystemUpdate() {
+    setTimeout(() => {
+        addMessage("System update completed successfully. All modules are up to date.", 'jarvis');
+    }, 5000); // Simulate time delay for update
+}
+
+// Handle file reading (for demonstration, this just simulates reading a file)
+function readFile(fileContent) {
+    setTimeout(() => {
+        addMessage(`File content:\n${fileContent}`, 'jarvis');
+    }, 2000); // Simulate time delay for file reading
+}
+
+// Perform an internet search (simulated with a static response)
+function performSearch(query) {
+    setTimeout(() => {
+        addMessage(`Search results for '${query}':\n- Result 1\n- Result 2\n- Result 3`, 'jarvis');
+    }, 3000); // Simulate time delay for search
+}
+
+// Process user message with new capabilities
+function processMessage(message) {
+    const lowerMessage = message.toLowerCase();
+    let response = "";
+
+    // Check knowledge base
+    for (const [key, value] of Object.entries(knowledgeBase)) {
+        if (lowerMessage.includes(key)) {
+            response = value;
+            break;
+        }
+    }
+
+    // If no specific response, generate a generic one or perform an action
+    if (response === "") {
+        const randomIndex = Math.floor(Math.random() * jarvisResponses.length);
+        response = jarvisResponses[randomIndex];
+    } else if (lowerMessage.includes("update system")) {
+        simulateSystemUpdate();
+        return; // No need to add a message to the chat
+    } else if (lowerMessage.includes("read file")) {
+        // Simulate reading a file
+        const fileContent = "This is a simulated file content.";
+        readFile(fileContent);
+        return; // No need to add a message to the chat
+    } else if (lowerMessage.includes("search")) {
+        // Extract the search query
+        const query = lowerMessage.split('"')[1] || "general query";
+        performSearch(query);
+        return; // No need to add a message to the chat
+    }
+
+    addMessage(response, 'jarvis');
+}
+
+            listenButton.addEventListener('click', function() {
+                if (recognition) {
+                    try {
+                        recognition.start();
+                        listenButton.classList.add('active');
+                        recognition.onend = function() {
+                            listenButton.classList.remove('active');
+                        };
+                    } catch (e) {
+                        console.error("Recognition error:", e);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
